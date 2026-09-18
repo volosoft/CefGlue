@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Avalonia.Reactive;
 using Avalonia.Threading;
 using Xilium.CefGlue.Common.Helpers;
 using Xilium.CefGlue.Common.Platform;
@@ -190,13 +191,22 @@ namespace Xilium.CefGlue.Avalonia.Platform
         private void OnAttachedToVisualTree(object sender, VisualTreeAttachmentEventArgs e)
         {
             VisibilityChanged?.Invoke(true);
-            if (e.Root is Window newWindow)
+
+            // Avalonia 12 no longer guarantees the attachment root is a TopLevel.
+            var topLevel = TopLevel.GetTopLevel(_control);
+            if (topLevel == null)
             {
-                _windowStateChangedObservable = newWindow.GetPropertyChangedObservable(Window.WindowStateProperty).Subscribe(OnHostWindowStateChanged);
+                return;
             }
-            if (e.Root.RenderScaling != RenderSurface.DeviceScaleFactor)
+
+            if (topLevel is Window newWindow)
             {
-                RenderSurface.DeviceScaleFactor = (float)e.Root.RenderScaling;
+                _windowStateChangedObservable = newWindow.GetPropertyChangedObservable(Window.WindowStateProperty)
+                    .Subscribe(new AnonymousObserver<AvaloniaPropertyChangedEventArgs>(OnHostWindowStateChanged));
+            }
+            if (topLevel.RenderScaling != RenderSurface.DeviceScaleFactor)
+            {
+                RenderSurface.DeviceScaleFactor = (float)topLevel.RenderScaling;
                 ScreenInfoChanged?.Invoke(RenderSurface.DeviceScaleFactor);
             }
         }
@@ -268,10 +278,11 @@ namespace Xilium.CefGlue.Avalonia.Platform
             var lastPointerEvent = this._lastPointerEvent; // story a copy, since this might be other thread
             if (lastPointerEvent != null)
             {
-                var dataObject = new DataObject();
-                dataObject.Set(DataFormats.Text, dragData.FragmentText);
+                var dataTransfer = new DataTransfer();
+                dataTransfer.Add(DataTransferItem.CreateText(dragData.FragmentText));
 
-                var result = await Dispatcher.UIThread.InvokeAsync(() => DragDrop.DoDragDrop(lastPointerEvent, dataObject, allowedOps.AsDragDropEffects()));
+                var result = await Dispatcher.UIThread.InvokeAsync(
+                    () => DragDrop.DoDragDropAsync(lastPointerEvent, dataTransfer, allowedOps.AsDragDropEffects()));
                 this._lastPointerEvent = null;
                 _previousCursor = null;
                 _currentDragCursor = null;

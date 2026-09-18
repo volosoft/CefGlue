@@ -32,7 +32,6 @@
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Dotnet.Bundle" />
-    <PackageReference Include="Avalonia.Diagnostics" />
   </ItemGroup>
 
   <ItemGroup>

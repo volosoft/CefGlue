@@ -16,8 +16,9 @@
     <ItemGroup>
         <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
         <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
-        <PackageVersion Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
-        <PackageVersion Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)" />
+        <!-- Avalonia.Diagnostics was removed in Avalonia 12.
+             The ReactiveUI dependency is gone: the CEF message pump now uses a DispatcherTimer,
+             so consumers are not forced onto a particular ReactiveUI version. -->
         <PackageVersion Include="Avalonia.Themes.Simple" Version="$(AvaloniaVersion)" />
       
         <PackageVersion Include="Dotnet.Bundle" Version="0.9.13" />

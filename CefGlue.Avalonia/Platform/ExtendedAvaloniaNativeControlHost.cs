@@ -2,6 +2,7 @@ using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
+using Avalonia.Reactive;
 using Avalonia.Threading;
 
 namespace Xilium.CefGlue.Avalonia.Platform
@@ -23,7 +24,8 @@ namespace Xilium.CefGlue.Avalonia.Platform
                     FixNativeNativeControlBounds();
                 }
             
-                this.GetPropertyChangedObservable(BoundsProperty).Subscribe(UpdateNativeControlBounds);
+                this.GetPropertyChangedObservable(BoundsProperty)
+                    .Subscribe(new AnonymousObserver<AvaloniaPropertyChangedEventArgs>(UpdateNativeControlBounds));
             
                 AttachedToVisualTree += OnAttachedToVisualTree;
                 DetachedFromVisualTree += OnDetachedFromVisualTree;

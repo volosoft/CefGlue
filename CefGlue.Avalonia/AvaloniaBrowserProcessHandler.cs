@@ -1,33 +1,36 @@
 using System;
-using System.Reactive.Linq;
-using Avalonia.ReactiveUI;
+using Avalonia.Threading;
 using Xilium.CefGlue.Common.Handlers;
 
 namespace Xilium.CefGlue.Avalonia
 {
     internal class AvaloniaBrowserProcessHandler : BrowserProcessHandler
     {
-        private IDisposable _current;
-        private object _schedule = new object();
+        private readonly object _schedule = new object();
+        private DispatcherTimer _current;
 
         protected override void OnScheduleMessagePumpWork(long delayMs)
         {
             lock (_schedule)
             {
-                if (_current != null)
-                {
-                    _current.Dispose();
-                }
+                _current?.Stop();
 
                 if (delayMs <= 0)
                 {
                     delayMs = 1;
                 }
 
-                _current = Observable.Interval(TimeSpan.FromMilliseconds(delayMs)).ObserveOn(AvaloniaScheduler.Instance).Subscribe((i) =>
+                // CEF raises this from one of its own threads. Avalonia 12 binds a DispatcherTimer to
+                // the dispatcher of the creating thread, so the UI dispatcher has to be passed explicitly.
+                var timer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher.UIThread)
                 {
-                    CefRuntime.DoMessageLoopWork();
-                });
+                    Interval = TimeSpan.FromMilliseconds(delayMs)
+                };
+
+                timer.Tick += (_, _) => CefRuntime.DoMessageLoopWork();
+                timer.Start();
+
+                _current = timer;
             }
         }
     }
