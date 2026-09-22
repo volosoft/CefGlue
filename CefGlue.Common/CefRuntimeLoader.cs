@@ -150,7 +150,7 @@ namespace Xilium.CefGlue.Common
                 }
 
                 // Initialize CEF while handlers are saved
-                CefRuntime.Initialize(new CefMainArgs(new[] { exeFileName }), settings,
+                CefRuntime.Initialize(new CefMainArgs(GetUnixMainArgs(exeFileName)), settings,
                     new BrowserCefApp(customSchemes, flags, browserProcessHandler), IntPtr.Zero);
             }
             finally
@@ -177,6 +177,21 @@ namespace Xilium.CefGlue.Common
                     }
                 }
             }
+        }
+
+        private static string[] GetUnixMainArgs(string exeFileName)
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return new[] { exeFileName };
+            }
+
+            // cef_initialize resets SIGTRAP and other handlers to SIG_DFL, and the saved handlers are only
+            // restored after it returns. A managed debugger raises SIGTRAP within that window and the
+            // process is killed. This switch makes Chromium skip the reset, but it has to be in argv:
+            // Chromium checks it before calling OnBeforeCommandLineProcessing, so appending it there
+            // is too late for this process.
+            return new[] { exeFileName, "--disable-in-process-stack-traces" };
         }
 
         // Helper to provide signal numbers in a cross-platform way

@@ -24,14 +24,10 @@ namespace Xilium.CefGlue.Common
                 if (CefRuntime.Platform == CefRuntimePlatform.Linux) 
                 {
                     commandLine.AppendSwitch("no-zygote");
-
-                    // Chromium installs its own signal handlers during initialization. That breaks the
-                    // .NET managed debugger on Linux, which implements breakpoints with an in-process
-                    // int3/SIGTRAP handler: a trap raised on a CEF thread never reaches the runtime and
-                    // the process dies with "Trace/breakpoint trap" inside cef_initialize.
-                    // See https://github.com/volosoft/CefGlue/issues/4 and
-                    // https://github.com/dotnet/runtime/issues/104459
-                    commandLine.AppendSwitch("disable-in-process-stack-traces");
+                    if (!commandLine.HasSwitch("disable-in-process-stack-traces"))
+                    {
+                        commandLine.AppendSwitch("disable-in-process-stack-traces");
+                    }
                 }
                 if (CefRuntimeLoader.IsOSREnabled)
                 {
