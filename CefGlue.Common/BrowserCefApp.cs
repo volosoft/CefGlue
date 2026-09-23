@@ -24,6 +24,10 @@ namespace Xilium.CefGlue.Common
                 if (CefRuntime.Platform == CefRuntimePlatform.Linux) 
                 {
                     commandLine.AppendSwitch("no-zygote");
+                    if (!commandLine.HasSwitch("disable-in-process-stack-traces"))
+                    {
+                        commandLine.AppendSwitch("disable-in-process-stack-traces");
+                    }
                 }
                 if (CefRuntimeLoader.IsOSREnabled)
                 {
